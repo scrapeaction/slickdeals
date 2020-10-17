@@ -1,7 +1,8 @@
 'use strict';
 const puppeteer = require('puppeteer');
 
-crawlPage();
+crawlPage("https://slickdeals.net/", "front-page");
+crawlPage("https://slickdeals.net/deals/", "popular-deals");
 
 function delay(time) {
     return new Promise(function (resolve) {
@@ -9,7 +10,7 @@ function delay(time) {
     });
 }
 
-function crawlPage() {
+function crawlPage(url, prefix) {
     (async () => {
 
         const args = [
@@ -29,8 +30,8 @@ function crawlPage() {
             width: 1920,
             height: 1080
         });
-        
-        await page.goto("https://slickdeals.net/", {
+
+        await page.goto(url, {
             waitUntil: 'networkidle0',
             timeout: 0
         });
@@ -40,21 +41,21 @@ function crawlPage() {
         for (let i = 0; i < addresses.length; i++) {
             console.log(`Now serving ${i} of ${addresses.length}: ${addresses[i]}`);
             try {
-                await page.goto(addresses[i], { waitUntil: "networkidle0", timeout: 0 });
+                if (addresses[i].startsWith("http") === true) {
+                    await page.goto(addresses[i], { waitUntil: "networkidle0", timeout: 300000 });
 
-                const watchDog = page.waitForFunction(() => 'window.status === "ready"', { timeout: 0 });
-                await watchDog;
+                    const watchDog = page.waitForFunction(() => 'window.status === "ready"', { timeout: 300000 });
+                    await watchDog;
 
-                await delay(4000);
-                console.log(`waited for four seconds`);
-                await page.screenshot({
-                    path: `screenshots/screenshots-${i}.png`,
-                    fullPage: true
-                });
-                await page.screenshot({
-                    path: `screenshots/screenshots-${i}-fold.png`,
-                    fullPage: false
-                });
+                    await page.screenshot({
+                        path: `screenshots/${prefix}-${i}.png`,
+                        fullPage: true
+                    });
+                    await page.screenshot({
+                        path: `screenshots/${prefix}-${i}-fold.png`,
+                        fullPage: false
+                    });
+                }
             } catch (error) {
                 console.error(error);
             } finally {
